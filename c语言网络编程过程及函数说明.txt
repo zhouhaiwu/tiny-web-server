@@ -1,0 +1,100 @@
+c语言网络编程过程及函数说明
+
+//TODO:
+TCP、UDP在OSI（Open System Interconnect）网络模型中处于传输层协议
+IP在OSI网络模型属于网络层
+常用网络函数：
+socket函数
+创建套接字、确定套接字的参数
+int socket(int domain, int type, int protocol);
+参数
+domain：  地址簇，常用的为IPv4 AF_INET和IPv6 AF_INET6
+type：    数据传输方式/套接字类型，常用的为 流格式（面向连接）SOCK_STREAM、数据报格式（面向无连接）SOCK_DGRAM
+protocol：传输协议，常用的有 TCP传输协议 IPPROTO_TCP 和 UDP传输协议 IPPTOTO_UDP
+返回值
+创建的套接字值
+
+bind函数
+服务器端使用bind函数将套接字和本地IP、端口等信息绑定（传输层和网络层互联）
+int bind(int sockfd, const struct sockaddr *addr,socklen_t addrlen);
+参数
+sockfd： socket函数创建的套接字
+*addr：  服务器本地的IP、端口、地址簇等信息
+addrlen：服务器信息的结构体大小
+返回值
+成功 0 失败 -1
+
+listen函数
+服务器绑定套接字和本地设备信息后，调用listen函数让套接字进入被动监听状态
+int listen(int sockfd, int backlog);
+参数
+sockfd： 需要进入监听的套接字
+backlog：监听客户端请求队列的最大个数，如果设置参数为SOMAXCONN，则由系统自动决定
+返回值
+成功 0 失败 -1
+
+accept函数
+服务器端阻塞接收客户端socket上的数据流，做响应处理
+int accept(int sock, struct sockaddr *addr, socklen_t *addrlen);
+参数
+sock:    listen函数监听到需要响应的套接字（服务端套接字）
+addr：   客户端的IP、端口号等信息（客户端信息）
+addrlen：客户端信息结构的大小
+返回值
+返回一个新的和客户端通信的套接字
+
+connect函数
+客户端连接到指定服务器的接口
+int connect(int sockfd, const struct sockaddr *addr,socklen_t addrlen);
+参数
+sockfd： 客户端创建用于与服务器端通信的套接字
+addr：   指定的服务器参数包括传输格式、地址、端口号等信息
+addrlen：服务器参数结构体的大小
+返回值
+成功 0 失败 -1
+
+select函数
+检测多个套接字的变化状态来做响应处理
+int select(int nfds, fd_set *readfds, fd_set *writefds,fd_set *exceptfds, struct timeval *timeout);
+参数
+nfds：      所监视的文件描述符中最大的值+1
+*readfds：  监测是否可读的文件描述符
+*writefds： 监测是否可写的文件描述符
+*exceptfds：监测是否有异常的文件描述符
+*timeout：  超时时间，如果为NULL，则阻塞等待直到前面的文件描述符变化
+返回值：
+监测到变化的文件描述符，如果因为超时而退出则返回值为0，如果异常 则为-1
+
+1】TCP协议数据传输具有粘包性
+2】TCP的三次握手发生在connect函数阶段
+3】UDP的数据传输需要使用sendto和recvfrom函数，他们和send、recv区别是，前者不光包含套接字信息，还包括目标地址信息
+ 
+ 
+TCP服务端编程
+socket  > bind > listen > accept > read ...send...
+socket  > bind > listen > select  > read ... send...
+TCP客户端编程
+socket  > bind > connect > read ... send...
+socket  > bind > connect > select > read ... send...
+客户端如果不调用bind函数，客户端设备会随机分配一个没有使用的端口 
+ 
+UDP服务器编程
+socket > bind > recvfrom... sendto...
+UDP客户端编程
+socket  > recvfrom... sendto...
+ 
+TCP与UDP基本区别
+  1.基于连接与无连接
+  2.TCP要求系统资源较多，UDP较少； 
+  3.UDP程序结构较简单 
+  4.流模式（TCP）与数据报模式(UDP); 
+  5.TCP保证数据正确性，UDP可能丢包 
+  6.TCP保证数据顺序，UDP不保证 
+　　
+UDP应用场景：
+  1.面向数据报方式
+  2.网络数据大多为短消息 
+  3.拥有大量Client
+  4.对数据安全性无特殊要求
+  5.网络负担非常重，但对响应速度要求高
+
